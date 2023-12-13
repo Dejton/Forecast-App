@@ -53,6 +53,9 @@ public abstract class AbstractObjectBuilder {
         this.windSpeed = windSpeed;
     }
 
+    public AbstractObjectBuilder(String country, String city, LocalDate date, int temperature, double pressure, double humidity, String windDirection, double windSpeed) {
+    }
+
     public double getLat() {
         return lat;
     }

@@ -11,4 +11,9 @@ public class Forecast extends AbstractObjectBuilder{
     public Forecast(String country, String city, LocalDate date, int temperature, double pressure, double humidity, String windDirection, double windSpeed, double lat, double lon) {
         super(country, city, date, temperature, pressure, humidity, windDirection, windSpeed, lat, lon);
     }
+    public Forecast(String country, String city, LocalDate date, int temperature, double pressure, double humidity, String windDirection, double windSpeed) {
+        super(country, city, date, temperature, pressure, humidity, windDirection, windSpeed);
+    }
+
+
 }

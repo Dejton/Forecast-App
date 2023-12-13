@@ -1,5 +1,6 @@
 package org.example.Date.dbaccess;
 
+import org.example.Date.Model.Forecast;
 import org.example.Date.Model.Location;
 
 import java.io.*;
@@ -9,12 +10,11 @@ import java.util.List;
 
 public class LocationFileService implements SaveAndReadLocationFile{
 
-    public static boolean isValuePresent(String value) {
-        try (BufferedReader reader = new BufferedReader(new FileReader("cities_list.csv"))) {
+    public static boolean isValuePresent(String value, String path) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                String[] values = line.split(",");
-                if (line.contains(value.toLowerCase())) {
+                if (line.toLowerCase().contains(value.toLowerCase())) {
                     return true;
                 }
             }
@@ -23,6 +23,7 @@ public class LocationFileService implements SaveAndReadLocationFile{
         }
         return false;
     }
+
 
     @Override
     public void addFileToDataBase(String city, String country, double lat, double lon) throws IOException {
@@ -42,7 +43,7 @@ public class LocationFileService implements SaveAndReadLocationFile{
                 .append("\n");
 
         try(BufferedWriter writer = new BufferedWriter(new FileWriter("cities_list.csv", true))) {
-            if (!isValuePresent(city)) {
+            if (!isValuePresent(city, "cities_list.csv")) {
                 writer.write(newData.toString());
             }
         }
