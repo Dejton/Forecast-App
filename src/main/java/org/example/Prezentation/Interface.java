@@ -34,19 +34,26 @@ public class Interface {
                 case 2:
                     System.out.println("Lista dostępnych miast: ");
                     System.out.println(Service.getCitiesList());
+                    System.out.println();
                     break;
                 case 3:
                     System.out.println("Podaj miasto: ");
                     String checkCity = scanner.nextLine();
-                    String averageData = Service.getStringForSaving(Service.getForecastFromApi(checkCity));
+                    String averageData = Service.getStringForSaving(Service.getForecastFromApiWithoutListChecking(checkCity));
+                    System.out.println();
                     Service.saveAverageForecastToFile(Service.getForecastFromApi(checkCity));
+                    System.out.println();
+                    System.out.println("Pogoda pobrana z zewnętrznego serwisu:");
                     System.out.println(averageData);
+                    System.out.println();
                     break;
                 case 4:
                     System.out.println("Podaj miasto:");
                     String checkCityFor4 = scanner.nextLine();
-                    Service.getForecastFromFile(checkCityFor4);
+                    System.out.println(Service.getForecastFromFileSecond(checkCityFor4));
+                    // Service.getForecastFromFile(checkCityFor4);
             }
+
         } while(input != 6);
             scanner.close();
             System.out.println("Aplikacja zamknięta.");

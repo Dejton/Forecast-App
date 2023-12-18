@@ -1,9 +1,6 @@
 package org.example.Logic.Service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.Date.Model.Forecast;
-import org.example.Date.Model.Location;
 import org.example.Date.dbaccess.LocationFileService;
 import org.example.Logic.ApiClients.OpenWeatherClient;
 import org.example.Logic.ApiClients.WeatherStackClient;
@@ -72,11 +69,10 @@ public class Service {
 
         if (!LocationFileService.isValuePresent(city, "cities_list.csv")) {
             System.out.println("Brak miasta na liście!");
-            return null;
         }
         return getAverageData(openWeatherData, weatherStackData);
     }
-    public static Forecast getForecastFromApiFor4(String city) throws IOException, InterruptedException {
+    public static Forecast getForecastFromApiWithoutListChecking(String city) throws IOException, InterruptedException {
         OpenWeatherClient openWeatherClient = new OpenWeatherClient();
         WeatherStackClient weatherStackClient = new WeatherStackClient();
         Forecast openWeatherData = openWeatherClient.apiMapper(openWeatherClient.getInfoFromApi(city));
@@ -129,27 +125,61 @@ public class Service {
         }
        }
 
-       public static void getForecastFromFile(String city) throws IOException, InterruptedException {
-        BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\patry\\IdeaProjects\\ForecastApp\\forecast_list.csv"));
+    public static String getForecastFromFileSecond(String city) throws IOException, InterruptedException {
+        Forecast forecastMaybe = getForecastFromFile(city, "C:\\Users\\patry\\IdeaProjects\\ForecastApp\\forecast_list.csv");
+        if (forecastMaybe == null) {
+            System.out.println("Brak miasta liście! Trwa pobieranie pogody z zewnętrznego serwisu.");
+            Forecast forecastFromApi = Service.getForecastFromApiWithoutListChecking(city);
+            return String.format("Country: %s\nCity: %s\nDate: %s\nTemperature: %d\nPressure: %f",
+                    forecastFromApi.getCountry(),
+                    forecastFromApi.getCity(),
+                    forecastFromApi.getDate().toString(),
+                    forecastFromApi.getTemperature(),
+                    forecastFromApi.getPressure()
+                    );
+        }
 
-            if (LocationFileService.isValuePresent(city, "C:\\Users\\patry\\IdeaProjects\\ForecastApp\\forecast_list.csv")) {
-                String line;
-                if ((line = reader.readLine()) != null) {
-                    if (line.toLowerCase().contains(city)) {
-                        String[] newForecastFromFile = line.split(",");
-                        System.out.println(getForecastFromCsv(newForecastFromFile));
-                    }
+        return forecastMaybe.toString();
+    }
+
+    private static Forecast getForecastFromFile(String city, String filePath) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(filePath));
+        if (LocationFileService.isValuePresent(city, filePath)) {
+            String line;
+            while((line = reader.readLine()) != null) {
+                if (line.toLowerCase().contains(city)) {
+                    String[] newForecastFromFile = line.split(",");
+                    System.out.println(Arrays.toString(newForecastFromFile));
+                    return getForecastFromCsv (newForecastFromFile);
                 }
-
-            } else {
-                System.out.println("Brak miasta liście! Trwa pobieranie pogody z zewnętrznego serwisu.");
-                System.out.println(Service.getForecastFromApiFor4(city));
             }
+        }
+        return null;
+    }
 
-       }
+       // MOJE
+
+       // public static void getForecastFromFile(String city) throws IOException, InterruptedException {
+       //  BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\patry\\IdeaProjects\\ForecastApp\\forecast_list.csv"));
+       //
+       //      if (LocationFileService.isValuePresent(city, "C:\\Users\\patry\\IdeaProjects\\ForecastApp\\forecast_list.csv")) {
+       //          String line;
+       //          if ((line = reader.readLine()) != null) {
+       //              if (line.toLowerCase().contains(city)) {
+       //                  String[] newForecastFromFile = line.split(",");
+       //                  System.out.println(getForecastFromCsv(newForecastFromFile));
+       //              }
+       //          }
+       //
+       //      } else {
+       //          System.out.println("Brak miasta liście! Trwa pobieranie pogody z zewnętrznego serwisu.");
+       //          System.out.println(Service.getForecastFromApiFor4(city));
+       //      }
+       //
+       // }
 
     private static Forecast getForecastFromCsv(String[] newForecastFromFile) {
-        if (newForecastFromFile.length == 8) {
+        if (newForecastFromFile.length == 9) {
             return new Forecast(newForecastFromFile[1],
                     newForecastFromFile[2],
                     LocalDate.now(),
