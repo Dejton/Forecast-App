@@ -38,12 +38,12 @@ public class Service {
     public static String getCitiesList() throws IOException {
         List<String> cities = new ArrayList<>();
         StringBuilder list = new StringBuilder();
-        try(BufferedReader reader = new BufferedReader(new FileReader("cities_list.csv"))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader("cities_list.csv"))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 final String[] split = line.split(",");
                 String cityName = "";
-                for (String e:split) {
+                for (String e : split) {
                     if (e.startsWith("City: ")) {
                         cityName = e.substring(5);
                     }
@@ -72,6 +72,7 @@ public class Service {
         }
         return getAverageData(openWeatherData, weatherStackData);
     }
+
     public static Forecast getForecastFromApiWithoutListChecking(String city) throws IOException, InterruptedException {
         OpenWeatherClient openWeatherClient = new OpenWeatherClient();
         WeatherStackClient weatherStackClient = new WeatherStackClient();
@@ -82,52 +83,33 @@ public class Service {
     }
 
     public static Forecast getAverageData(Forecast firstValue, Forecast secondValue) {
-        Forecast forecastWithAverageData = new Forecast(
-                secondValue.getCountry(),
-                secondValue.getCity(),
-                secondValue.getDate(),
-                ((firstValue.getTemperature() + secondValue.getTemperature()) / 2),
-                ((firstValue.getPressure() + secondValue.getPressure()) / 2),
-                ((firstValue.getHumidity() + secondValue.getHumidity()) / 2),
-                String.valueOf((Double.parseDouble(firstValue.getWindDirection()) + Double.parseDouble(secondValue.getWindDirection()) / 2)),
-                ((firstValue.getWindSpeed() + secondValue.getWindSpeed()) /2),
-                secondValue.getLat(),
-                secondValue.getLon()
-        );
+        Forecast forecastWithAverageData = new Forecast(secondValue.getCountry(), secondValue.getCity(), secondValue.getDate(), ((firstValue.getTemperature() + secondValue.getTemperature()) / 2), ((firstValue.getPressure() + secondValue.getPressure()) / 2), ((firstValue.getHumidity() + secondValue.getHumidity()) / 2), String.valueOf((Double.parseDouble(firstValue.getWindDirection()) + Double.parseDouble(secondValue.getWindDirection()) / 2)), ((firstValue.getWindSpeed() + secondValue.getWindSpeed()) / 2), secondValue.getLat(), secondValue.getLon());
         return forecastWithAverageData;
     }
 
     public static String getStringForSaving(Forecast finalForecast) throws IOException {
-           if (finalForecast == null) {
-               return null;
-           } else {
-               String finalResult = String.format("%s:\n Temperature: %d\n Pressure: %f\n Humidity: %f\n Wind Direction: %s\n Wind speed: %f\n",
-                       finalForecast.getCity(),
-                       finalForecast.getTemperature(),
-                       finalForecast.getPressure(),
-                       finalForecast.getHumidity(),
-                       finalForecast.getWindDirection(),
-                       finalForecast.getWindSpeed());
+        if (finalForecast == null) {
+            return null;
+        } else {
+            String finalResult = String.format("%s:\n Temperature: %d\n Pressure: %f\n Humidity: %f\n Wind Direction: %s\n Wind speed: %f\n", finalForecast.getCity(), finalForecast.getTemperature(), finalForecast.getPressure(), finalForecast.getHumidity(), finalForecast.getWindDirection(), finalForecast.getWindSpeed());
 
-               return finalResult;
-           }
+            return finalResult;
+        }
     }
+
     public static void saveAverageForecastToFile(Forecast averageForecast) throws IOException {
-        try (PrintWriter writer = new PrintWriter(new FileWriter("C:\\Users\\patry\\IdeaProjects\\ForecastApp\\forecast_list.csv", true))){
+        try (PrintWriter writer = new PrintWriter(new FileWriter("C:\\Users\\patry\\IdeaProjects\\ForecastApp\\forecast_list.csv", true))) {
             final List<String> forecastInfo = loadWeatherInfosFromFile();
             Files.write(Path.of("C:\\Users\\patry\\IdeaProjects\\ForecastApp\\forecast_list.csv"), new byte[0]);
-            final List<String> updatedForecastInfo = new ArrayList<>(forecastInfo.stream()
-                    .filter(wf -> !wf.contains(averageForecast.getCity()))
-                    .toList());
+            final List<String> updatedForecastInfo = new ArrayList<>(forecastInfo.stream().filter(wf -> !wf.contains(averageForecast.getCity())).toList());
             updatedForecastInfo.add(averageForecast.toString());
 
             updatedForecastInfo.forEach(writer::println);
         }
-       }
+    }
 
     public static String getForecastFromFileSecond(String city) throws IOException, InterruptedException {
-        Forecast forecastMaybe = getForecastFromFile(city, "C:\\Users\\patry\\IdeaProjects\\ForecastApp\\forecast_list.csv");
-        if (forecastMaybe == null) {
+        if (!LocationFileService.isValuePresent(city, "C:\\Users\\patry\\IdeaProjects\\ForecastApp\\forecast_list.csv")) {
             System.out.println("Brak miasta liście! Trwa pobieranie pogody z zewnętrznego serwisu.");
             Forecast forecastFromApi = Service.getForecastFromApiWithoutListChecking(city);
             return String.format("Country: %s\nCity: %s\nDate: %s\nTemperature: %d\nPressure: %f",
@@ -135,13 +117,12 @@ public class Service {
                     forecastFromApi.getCity(),
                     forecastFromApi.getDate().toString(),
                     forecastFromApi.getTemperature(),
-                    forecastFromApi.getPressure()
-                    );
+                    forecastFromApi.getPressure());
+        } else {
+            return getForecastFromFile(city, "C:\\Users\\patry\\IdeaProjects\\ForecastApp\\forecast_list.csv").toString();
         }
 
-        return forecastMaybe.toString();
     }
-
     private static Forecast getForecastFromFile(String city, String filePath) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(filePath));
         if (LocationFileService.isValuePresent(city, filePath)) {
@@ -150,7 +131,14 @@ public class Service {
                 if (line.toLowerCase().contains(city)) {
                     String[] newForecastFromFile = line.split(",");
                     System.out.println(Arrays.toString(newForecastFromFile));
-                    return getForecastFromCsv (newForecastFromFile);
+                    // return getForecastFromCsv (newForecastFromFile);
+                    return new Forecast(newForecastFromFile[1],
+                            newForecastFromFile[2],
+                            LocalDate.now(),
+                            Integer.parseInt(newForecastFromFile[4].replaceAll("\\D+", "")),
+                            Double.parseDouble(newForecastFromFile[5].replaceAll("\\D+", "")),
+                            Double.parseDouble(newForecastFromFile[6].replaceAll("\\D+", "")),
+                            newForecastFromFile[7], Double.parseDouble(newForecastFromFile[8].replaceAll("\\D+", "")));
                 }
             }
         }
